@@ -67,6 +67,7 @@ services:
       - "30080:5000"
     volumes:
       - ./config/localsettings.json:/app/localsettings.json:ro
+      - ./config/appsettings.Development.json:/app/appsettings.Development.json:ro
     depends_on:
       db-init:
         condition: service_completed_successfully
@@ -91,9 +92,10 @@ services:
         GIT_BRANCH: ${GIT_BRANCH:-main}
         NUGET_PAT: ${NUGET_PAT}
     ports:
-      - "30081:5001"
+      - "30081:5000"
     volumes:
       - ./config/localsettings.json:/app/localsettings.json:ro
+      - ./config/appsettings.Development.json:/app/appsettings.Development.json:ro
     depends_on:
       db-init:
         condition: service_completed_successfully
@@ -110,9 +112,10 @@ services:
         GIT_BRANCH: ${GIT_BRANCH:-main}
         NUGET_PAT: ${NUGET_PAT}
     ports:
-      - "30082:5002"
+      - "30082:5000"
     volumes:
       - ./config/localsettings.json:/app/localsettings.json:ro
+      - ./config/appsettings.Development.json:/app/appsettings.Development.json:ro
     depends_on:
       db-init:
         condition: service_completed_successfully

@@ -5,11 +5,11 @@
     "HangfireConnection": "Server=ms-sql-server;Database=Clockshark.HANGFIRE;User Id=sa;Password=StrongPassw0rd;Encrypt=False;TrustServerCertificate=True"
   },
   "Redis": {
-    "ConnectionString": "redis:6379"
+    "ConnectionString": "redis:6379,allowAdmin=true"
   },
   "SignalR": {
     "BackplaneMode": "Redis",
-    "Redis": "redis:6379"
+    "Redis": "redis:6379,allowAdmin=true"
   },
   "Hangfire": {
     "PrepareSchemaIfNecessary": true
@@ -32,5 +32,6 @@
   "Telemetry": {
     "Disable": true,
     "DisableTracing": true
-  }
+  },
+  "Urls": "http://+:5000"
 }

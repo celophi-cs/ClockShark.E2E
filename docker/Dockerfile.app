@@ -51,8 +51,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV ASPNETCORE_ENVIRONMENT=Development
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-# Generate a self-signed dev certificate so Kestrel can bind HTTPS
-RUN dotnet dev-certs https
 
 
 WORKDIR /app
