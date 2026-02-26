@@ -1,0 +1,36 @@
+{
+  "Environment": "Development",
+  "ClockSharkDatabase": {
+    "DefaultConnection": "Server=ms-sql-server;Database=Clockshark.DATABASE;User Id=sa;Password=StrongPassw0rd;Encrypt=False;TrustServerCertificate=True",
+    "HangfireConnection": "Server=ms-sql-server;Database=Clockshark.HANGFIRE;User Id=sa;Password=StrongPassw0rd;Encrypt=False;TrustServerCertificate=True"
+  },
+  "Redis": {
+    "ConnectionString": "redis:6379"
+  },
+  "SignalR": {
+    "BackplaneMode": "Redis",
+    "Redis": "redis:6379"
+  },
+  "Hangfire": {
+    "PrepareSchemaIfNecessary": true
+  },
+  "Azure": {
+    "Storage": {
+      "Blob": {
+        "BlobAttachmentProvider": {
+          "ConnectionString": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azure-storage:10000/devstoreaccount1"
+        }
+      }
+    }
+  },
+  "WebBlob": {
+    "StorageConnection": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azure-storage:10000/devstoreaccount1"
+  },
+  "Seq": {
+    "ServerUrl": "http://seq:80"
+  },
+  "Telemetry": {
+    "Disable": true,
+    "DisableTracing": true
+  }
+}

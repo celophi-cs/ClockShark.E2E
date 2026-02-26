@@ -1,0 +1,54 @@
+# ============================================================
+# Stage 1: Clone repo and build dacpac
+# ============================================================
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
+ARG GIT_TOKEN
+ARG GIT_BRANCH=main
+ARG NUGET_PAT
+
+WORKDIR /repo
+
+# Install git and clone (shallow for speed)
+RUN apt-get update && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --depth 1 --branch ${GIT_BRANCH} \
+    https://${GIT_TOKEN}@github.com/clockshark/ClockShark.git .
+
+# Add credentials to existing ClockShark.Libraries NuGet source
+RUN dotnet nuget update source "ClockShark.Libraries" \
+    --username "az" \
+    --password "${NUGET_PAT}" \
+    --store-password-in-clear-text \
+    --configfile nuget.config
+
+# Build the dacpac
+RUN dotnet build Source/Clockshark.DATABASE/Clockshark.DATABASE.sqlproj -c Release
+
+# ============================================================
+# Stage 2: Runtime — publish dacpac to MSSQL
+# ============================================================
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS runtime
+
+# Install SqlPackage and mssql-tools
+RUN dotnet tool install -g microsoft.sqlpackage
+
+# Install sqlcmd for health checks
+RUN apt-get update && apt-get install -y --no-install-recommends curl gnupg \
+    && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && curl -fsSL https://packages.microsoft.com/config/debian/12/prod.list | tee /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y --no-install-recommends mssql-tools18 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="${PATH}:/root/.dotnet/tools:/opt/mssql-tools18/bin"
+
+# Copy built dacpac
+COPY --from=build /repo/Source/Clockshark.DATABASE/bin/Release/Clockshark.DATABASE.dacpac /dacpac/
+
+# Copy entrypoint script
+COPY docker/db-init.sh /db-init.sh
+RUN chmod +x /db-init.sh
+
+ENTRYPOINT ["/db-init.sh"]
