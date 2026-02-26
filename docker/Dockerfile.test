@@ -1,0 +1,3 @@
+FROM alpine
+COPY Source/ClockShark.sln /tmp/
+RUN ls -la /tmp/ClockShark.sln

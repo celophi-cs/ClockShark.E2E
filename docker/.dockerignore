@@ -1,0 +1,13 @@
+**/.git
+**/.vs
+**/bin
+**/obj
+**/node_modules
+**/TestResults
+**/.idea
+**/container-shark
+**/bicep
+**/docs
+**/scripts
+**/*.user
+**/*.suo

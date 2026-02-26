@@ -1,0 +1,21 @@
+{
+  "name": "clockshark-e2e",
+  "version": "1.0.0",
+  "description": "End-to-end tests for ClockShark using Playwright",
+  "private": true,
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:ui": "npx playwright test --ui",
+    "test:debug": "npx playwright test --debug",
+    "report": "npx playwright show-report"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.50.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}
