@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { LoginPage } from '../../src/pages/login.page';
 import { SignupPage } from '../../src/pages/signup.page';
+import { WelcomePage } from '../../src/pages/welcome.page';
 
 test.describe('Company Registration', () => {
-  test('can sign up for a new account from the login page', async ({ page }) => {
+  test('can sign up and complete onboarding', async ({ page }) => {
     const loginPage = new LoginPage(page);
     const signupPage = new SignupPage(page);
+    const welcomePage = new WelcomePage(page);
 
     // Navigate to login and click the sign-up link
     await loginPage.goto();
@@ -19,7 +21,25 @@ test.describe('Company Registration', () => {
 
     await signupPage.register(email, password);
 
-    // After successful registration, should redirect to the welcome/onboarding page
-    await expect(page).toHaveURL(/\/(App\/Welcome|App)/, { timeout: 30_000 });
+    // Should redirect to the welcome/onboarding page
+    await expect(page).toHaveURL(/\/App\/Welcome/, { timeout: 30_000 });
+
+    // Step 1: Personal Information
+    await welcomePage.completeStep1('Test', 'User', '5551234567');
+
+    // Step 2: Company Information
+    await welcomePage.completeStep2(
+      'E2E Test Company',
+      'Construction',
+      '1-10',
+      'United States',
+      'California',
+    );
+
+    // Step 3: Skip mobile app download
+    await welcomePage.skipMobileApp();
+
+    // Should remain on the welcome page after completing all steps
+    await expect(page).toHaveURL(/\/App\/Welcome/);
   });
 });
