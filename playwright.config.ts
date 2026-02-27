@@ -15,7 +15,8 @@ export default defineConfig({
   globalTeardown: './src/global-teardown.ts',
 
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:30080',
+    baseURL: process.env.BASE_URL || 'https://localhost:30080',
+    ignoreHTTPSErrors: true,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },

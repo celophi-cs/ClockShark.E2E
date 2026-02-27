@@ -76,7 +76,7 @@ services:
       azure-storage:
         condition: service_started
     healthcheck:
-      test: curl -f http://localhost:5000 || exit 1
+      test: curl -fk https://localhost:5000 || exit 1
       interval: 10s
       timeout: 5s
       retries: 30

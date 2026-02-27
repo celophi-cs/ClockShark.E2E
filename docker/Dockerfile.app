@@ -25,6 +25,9 @@ RUN dotnet nuget update source "ClockShark.Libraries" \
 
 RUN dotnet restore Source/ClockShark.sln
 
+# Generate a self-signed dev certificate for HTTPS
+RUN mkdir -p /https && dotnet dev-certs https -ep /https/cert.pfx -p devcertpass
+
 # ============================================================
 # Stage 2: Publish each app
 # ============================================================
@@ -49,32 +52,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libicu-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy the dev certificate from the SDK stage
+COPY --from=restore /https/cert.pfx /https/cert.pfx
+
 ENV ASPNETCORE_ENVIRONMENT=Development
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-
 
 WORKDIR /app
 
 # -- MVC --
 FROM runtime-base AS mvc
-ARG MVC_PORT=5000
 COPY --from=publish-mvc /app/publish .
-ENV ASPNETCORE_URLS=http://+:${MVC_PORT}
-EXPOSE ${MVC_PORT}
+EXPOSE 5000
 ENTRYPOINT ["dotnet", "ClockShark.MVC.dll"]
 
 # -- Hangfire --
 FROM runtime-base AS hangfire
-ARG HANGFIRE_PORT=5001
 COPY --from=publish-hangfire /app/publish .
-ENV ASPNETCORE_URLS=http://+:${HANGFIRE_PORT}
-EXPOSE ${HANGFIRE_PORT}
+EXPOSE 5000
 ENTRYPOINT ["dotnet", "ClockShark.HANGFIRE.dll"]
 
 # -- Admin --
 FROM runtime-base AS admin
-ARG ADMIN_PORT=5002
 COPY --from=publish-admin /app/publish .
-ENV ASPNETCORE_URLS=http://+:${ADMIN_PORT}
-EXPOSE ${ADMIN_PORT}
+EXPOSE 5000
 ENTRYPOINT ["dotnet", "ClockShark.ADMIN.dll"]

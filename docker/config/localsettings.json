@@ -11,6 +11,9 @@
     "BackplaneMode": "Redis",
     "Redis": "redis:6379,allowAdmin=true"
   },
+  "Session": {
+    "Redis": "redis:6379,allowAdmin=true"
+  },
   "Hangfire": {
     "PrepareSchemaIfNecessary": true
   },
@@ -33,5 +36,5 @@
     "Disable": true,
     "DisableTracing": true
   },
-  "Urls": "http://+:5000"
+  "Urls": "https://+:5000"
 }
