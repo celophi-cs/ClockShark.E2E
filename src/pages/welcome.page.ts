@@ -18,7 +18,9 @@ export class WelcomePage {
   }
 
   async clickNextStep1() {
-    await this.page.locator('#step-1 button.btn-orange-primary').click();
+    await this.page.locator('#step-1 button', { hasText: 'Next' }).click();
+    // Wait for step 2 to become visible
+    await this.page.locator('#step-2').waitFor({ state: 'visible', timeout: 10_000 });
   }
 
   async completeStep1(firstName: string, lastName: string, phone: string) {
@@ -52,7 +54,9 @@ export class WelcomePage {
   }
 
   async clickNextStep2() {
-    await this.page.locator('#step-2 button.btn-orange-primary').click();
+    await this.page.locator('#step-2 button', { hasText: 'Next' }).click();
+    // Wait for step 3 to become visible
+    await this.page.locator('#step-3').waitFor({ state: 'visible', timeout: 10_000 });
   }
 
   async completeStep2(
