@@ -1,0 +1,175 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname, relative, posix } from 'node:path';
+import type { ActionLogEntry } from './types.js';
+
+/** Action tools that translate into test code (skip observation-only tools) */
+const OBSERVABLE_TOOLS = new Set([
+  'get_page_snapshot',
+  'get_element_text',
+  'screenshot',
+]);
+
+/**
+ * Convert a role= selector string into Playwright getByRole() code.
+ * e.g. role=button[name="Submit"] → page.getByRole('button', { name: 'Submit' })
+ */
+function selectorToCode(selector: string): string {
+  const roleMatch = selector.match(
+    /^role=(\w+)(?:\[name=["'](.+?)["']\])?$/,
+  );
+  if (roleMatch) {
+    const [, role, name] = roleMatch;
+    return name
+      ? `page.getByRole('${role}', { name: '${name}' })`
+      : `page.getByRole('${role}')`;
+  }
+  // CSS selector — escape for template literal
+  return `page.locator('${selector.replace(/'/g, "\\'")}')`;
+}
+
+/**
+ * Convert a single action log entry to a line of Playwright test code.
+ */
+function actionToCode(entry: ActionLogEntry): string | null {
+  const { tool, args } = entry;
+
+  switch (tool) {
+    case 'navigate':
+      return `  await page.goto('${args.url}', { waitUntil: 'domcontentloaded' });`;
+
+    case 'wait_for_url': {
+      const pattern = args.pattern as string;
+      const timeout = args.timeout ? `, { timeout: ${args.timeout} }` : '';
+      return `  await page.waitForURL('**/*${pattern}*'${timeout});`;
+    }
+
+    case 'wait_for_load':
+      return `  await page.waitForLoadState('networkidle');`;
+
+    case 'click':
+      return `  await ${selectorToCode(args.selector as string)}.click();`;
+
+    case 'fill':
+      return `  await ${selectorToCode(args.selector as string)}.fill('${(args.value as string).replace(/'/g, "\\'")}');`;
+
+    case 'check':
+      return `  await ${selectorToCode(args.selector as string)}.check();`;
+
+    case 'select_option': {
+      const sel = selectorToCode(args.selector as string);
+      const value = (args.value as string).replace(/'/g, "\\'");
+      return `  await ${sel}.selectOption('${value}');`;
+    }
+
+    case 'press_key':
+      return `  await page.keyboard.press('${args.key}');`;
+
+    case 'assert_url': {
+      const pattern = (args.pattern as string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return `  await expect(page).toHaveURL(/${pattern}/);`;
+    }
+
+    case 'assert_visible':
+      return `  await expect(${selectorToCode(args.selector as string)}).toBeVisible();`;
+
+    case 'assert_text': {
+      const expected = (args.expected as string).replace(/'/g, "\\'");
+      return `  await expect(${selectorToCode(args.selector as string)}).toContainText('${expected}');`;
+    }
+
+    case 'wait': {
+      const ms = args.ms as number;
+      return `  await page.waitForTimeout(${ms});`;
+    }
+
+    default:
+      return null;
+  }
+}
+
+/**
+ * Compute the relative import path from the generated test to the fixture.
+ * Both paths are relative to the project root.
+ */
+function computeFixtureImport(generatedTestPath: string): string {
+  const testDir = dirname(generatedTestPath);
+  let rel = relative(testDir, 'src/fixtures/base.fixture');
+  // Normalize to posix slashes for import
+  rel = rel.split('\\').join('/');
+  if (!rel.startsWith('.')) rel = './' + rel;
+  return rel;
+}
+
+export interface GenerateTestOptions {
+  /** The spec ID used as the test describe block name */
+  specId: string;
+  /** Path for the generated test file (relative to project root) */
+  outputPath: string;
+  /** Action log from a successful agent run */
+  actionLog: ActionLogEntry[];
+  /** Project root directory */
+  projectRoot: string;
+}
+
+/**
+ * Generate a deterministic Playwright test file from an action log.
+ * Returns the absolute path of the written file.
+ */
+export async function generateTest(options: GenerateTestOptions): Promise<string> {
+  const { specId, outputPath, actionLog, projectRoot } = options;
+
+  const fixtureImport = computeFixtureImport(outputPath);
+
+  // Filter to only actionable tools and convert to code
+  const codeLines = actionLog
+    .filter((entry) => !OBSERVABLE_TOOLS.has(entry.tool))
+    .map(actionToCode)
+    .filter((line): line is string => line !== null);
+
+  // Handle dynamic data: replace timestamps with Date.now()
+  const processedLines = codeLines.map((line) => {
+    // Replace hardcoded e2e+ email timestamps with dynamic ones
+    return line.replace(
+      /e2e\+(\d{13,})@/g,
+      "e2e+${Date.now()}@",
+    ).replace(
+      /e2e\+emp\+(\d{13,})@/g,
+      "e2e+emp+${Date.now()}@",
+    );
+  });
+
+  // Check if any line uses template literals (${...}) and needs backticks
+  const finalLines = processedLines.map((line) => {
+    if (line.includes('${Date.now()}')) {
+      // Convert single-quoted strings containing template expressions to backticks
+      return line.replace(
+        /'([^']*\$\{Date\.now\(\)\}[^']*)'/g,
+        '`$1`',
+      );
+    }
+    return line;
+  });
+
+  const testCode = `// Auto-generated by AI test runner — do not edit manually.
+// Regenerate by running: npm run test:ai -- --force-regen
+// Spec: ${specId}
+
+import { test, expect } from '${fixtureImport}';
+
+test.describe('${specId}', () => {
+  test('${specId}', async ({ page }) => {
+${finalLines.join('\n\n')}
+  });
+});
+`;
+
+  const absPath = posix.join(
+    projectRoot.split('\\').join('/'),
+    outputPath.split('\\').join('/'),
+  );
+
+  await mkdir(dirname(absPath), { recursive: true });
+  await writeFile(absPath, testCode, 'utf-8');
+
+  return absPath;
+}
