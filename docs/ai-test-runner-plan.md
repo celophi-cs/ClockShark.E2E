@@ -122,10 +122,23 @@ Generated tests use **flat Playwright calls only** (no page objects). They're di
 ## Self-Healing Runner (ai-runner.ts)
 
 ```
-npm run test:ai                     # run all specs
+npm run test:ai                     # run all specs (auto-detects backend)
+npm run test:ai:cli                 # force Claude Code CLI backend (no API key)
+npm run test:ai:api                 # force Anthropic API backend (needs ANTHROPIC_API_KEY)
 npm run test:ai -- specs/signup     # run specific spec
 npm run test:ai -- --force-regen    # force AI re-derivation
 ```
+
+### Two Backends
+
+The runner supports two backends, auto-detected based on `ANTHROPIC_API_KEY`:
+
+| Backend | Flag | API Key? | How it works | Best for |
+|---------|------|----------|--------------|----------|
+| **API** | `--backend=api` | Required | Anthropic SDK + 15 custom Playwright tools + structured action log → deterministic test generation | CI/CD, deployment |
+| **CLI** | `--backend=cli` | Not needed | Shells out to `claude` CLI with Playwright MCP → Claude Code writes test directly | Local dev, no extra cost |
+
+Auto-detection: if `ANTHROPIC_API_KEY` is set → API backend, otherwise → CLI backend.
 
 Per spec:
 1. Parse spec, compute current hash
@@ -153,7 +166,7 @@ The `--force-regen` flag also triggers the 5-pass gate. The runner reports: `STA
 ## Integration with Existing Infrastructure
 
 - `npx playwright test` stays fast and free -- runs hand-written + generated tests
-- `npm run test:ai` is the AI-powered runner (separate command, requires API key)
+- `npm run test:ai` is the AI-powered runner (auto-detects API key or falls back to Claude Code CLI)
 - Generated tests in `tests/ai-generated/` are picked up by `playwright.config.ts` automatically (testDir: `./tests`)
 - The Chameleon dismisser from `base.fixture.ts` is used in both AI runs and generated tests
 - Global setup/teardown (Podman compose) works the same way

@@ -1,7 +1,7 @@
 ---
 id: signup-flow
 generated_test: tests/ai-generated/registration/signup.generated.spec.ts
-spec_hash: null
+spec_hash: 80b0d536929144c4b821796c08ce8cf0318fb8f103bfa5b649d7bc4bf7134d65
 preconditions:
   - clean-session
 timeout: 120000

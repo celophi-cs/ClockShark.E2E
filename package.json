@@ -9,6 +9,8 @@
     "test:ui": "npx playwright test --ui",
     "test:debug": "npx playwright test --debug",
     "test:ai": "npx tsx ai-runner.ts",
+    "test:ai:cli": "npx tsx ai-runner.ts --backend=cli",
+    "test:ai:api": "npx tsx ai-runner.ts --backend=api",
     "test:ai:regen": "npx tsx ai-runner.ts --force-regen",
     "test:all": "npm run test:ai && npx playwright test",
     "report": "npx playwright show-report",
