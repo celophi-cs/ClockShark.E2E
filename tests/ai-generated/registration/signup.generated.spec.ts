@@ -14,14 +14,12 @@ test.describe('signup-flow', () => {
     await page.getByRole('link', { name: 'Sign up' }).click();
     await expect(page).toHaveURL(/\/Signup/);
 
-    // Steps 3 & 4: Fill email and password
+    // Steps 3–5: Fill signup form
     await page.getByRole('textbox', { name: 'Work Email' }).fill(email);
     await page.getByRole('textbox', { name: 'Password' }).fill('TestPass123!');
+    await page.getByRole('checkbox', { name: /I agree to the ClockShark/ }).setChecked(true);
 
-    // Step 5: Check terms and conditions
-    await page.getByRole('checkbox', { name: /I agree to the ClockShark/ }).click();
-
-    // Step 6: Submit signup — button label is "Try Free for 14 Days"
+    // Step 6: Submit — button label is "Try Free for 14 Days" (not "Start Trial")
     await page.getByRole('button', { name: 'Try Free for 14 Days' }).click();
 
     // Step 7: Wait for redirect to onboarding welcome page
@@ -36,20 +34,21 @@ test.describe('signup-flow', () => {
     await page.locator('#step-1').getByText('Next').click();
 
     // Steps 10–14: Onboarding Step 2 — company info
+    // Note: dropdowns are native <select> elements identified by id.
+    // Country and State use numeric IDs (US=236, California=4062).
     await page.getByLabel('Company Name').fill('E2E Test Company');
-    await page.getByLabel('Industry Type').selectOption('Construction');
-    await page.getByLabel('Number of Employees').selectOption('1-10');
-    await page.getByLabel('Country', { exact: true }).selectOption('United States');
-    // State/Province appears after selecting United States
-    await page.getByLabel('State / Province').selectOption('California');
+    await page.locator('#industry').selectOption('Construction');        // text: "Construction/Trade"
+    await page.locator('#employeeRange').selectOption('1-10');
+    await page.locator('#country').selectOption('236');                  // text: "United States"
+    await page.locator('#stateProvince').selectOption('4062');           // text: "California"
 
     // Step 15: Proceed to Step 3
     await page.locator('#step-2').getByText('Next').click();
 
-    // Step 16: Skip the mobile app prompt
+    // Step 16: Skip mobile app prompt
     await page.getByText("I'll do this later").click();
 
-    // Verify onboarding complete — redirected into the app
+    // Onboarding complete — app redirects into the main app
     await expect(page).toHaveURL(/\/App\//, { timeout: 15000 });
   });
 });
