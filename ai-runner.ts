@@ -20,11 +20,11 @@ type Backend = 'api' | 'cli';
 const args = process.argv.slice(2);
 const forceRegen = args.includes('--force-regen');
 const stabilityRuns = parseInt(
-  args.find((a) => a.startsWith('--stability-runs='))?.split('=')[1] ?? '5',
+  args.find((a) => a.startsWith('--stability-runs='))?.split('=')[1] ?? '10',
   10,
 );
 const maxRegenAttempts = parseInt(
-  args.find((a) => a.startsWith('--max-regen='))?.split('=')[1] ?? '3',
+  args.find((a) => a.startsWith('--max-regen='))?.split('=')[1] ?? '5',
   10,
 );
 const specArgs = args.filter(
